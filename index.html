@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Übungsracker "Profectus"</title>
+    <style>
+        body {
+            margin-left: 20px;
+            padding: 0px;
+        }
+
+        h1 {
+            font-size: 30px;
+        }
+
+        #ContainerEmails {
+            width: 300px;
+            height: auto;
+            color: white;
+            background-color: #4cacd2;
+            border: solid;
+            border-color: black;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        #ContainerEmailHistory {
+            width: 300px;
+            margin-top: 15px;
+            color: aliceblue;
+            background-color: #4cacd2;
+            border: solid;
+            border-color: black;
+            padding: 20px;
+            max-height: 200px;
+            border-radius: 10px;
+            overflow: auto;
+        }
+
+        #ContainerEmailEintragen {
+            width: 150px;
+            height: 20px;
+            padding: 5px;
+            margin-top: 20px;
+            font-size: small;
+            text-align: center;
+            color: black;
+            background-color: rgb(220, 181, 223);
+            border: solid;
+            border-radius: 10px;
+            border-color: black;
+            border-width: 2px;
+            position: relative;
+            left: 80px;
+            cursor: pointer;
+        }
+
+        .history-item {
+            margin-top: 5px;  /* Abstand zwischen den E-Mail-Einträgen */
+            padding: 5px;     /* Innenabstand der E-Mail-Einträge */
+            color: black;
+            background-color: white;  /* Hintergrundfarbe für die E-Mail-Einträge */
+            border-radius: 5px;  /* Abgerundete Ecken */
+            border: solid 1px black;  /* Schwarzer Rahmen */
+        }
+
+        #emailInput {
+            margin-top: 10px;
+            width: 90%;
+            height: 20px;
+            padding: 4px;
+            border-radius: 5px;
+        }
+
+        .btnExportEmails {
+            width: 150px;
+            height: auto;
+            padding: 5px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-size: small;
+            text-align: center;
+            color: black;
+            background-color: rgb(220, 181, 223);
+            border: solid;
+            border-radius: 10px;
+            border-color: black;
+            border-width: 2px;
+            position: relative;
+            left: 80px;
+            cursor: pointer;
+        }
+
+       
+    </style>
+</head>
+<body>
+    <h1>Aseda-Collection GmbH</h1>
+    <h4>E-Mail</h4>
+    <div id="ContainerEmails">
+        <label for="emailInput">E-Mail-Adresse:</label></br>
+        <input type="text" id="emailInput" placeholder="info@aseda-collection.com">
+    </div>
+    <div id="ContainerEmailEintragen">E-Mail-Adresse eintragen</div>
+    <h3>Übersicht</h3>
+    <div id="ContainerEmailHistory"></div>
+
+<script>
+const inputEmail = document.getElementById('emailInput');
+const btnEmailEintragen = document.getElementById('ContainerEmailEintragen');
+const containerEmailHistory = document.getElementById('ContainerEmailHistory');
+
+// Funktion zum Speichern der E-Mail im Local Storage
+const saveEmail = (email) => {
+    let emailHistory = JSON.parse(localStorage.getItem('emailHistory')) || [];
+    emailHistory.push(email);
+    localStorage.setItem('emailHistory', JSON.stringify(emailHistory));
+};
+
+// Funktion zum Laden der E-Mails aus dem Local Storage
+const loadEmails = () => {
+    const emailHistory = JSON.parse(localStorage.getItem('emailHistory')) || [];
+    emailHistory.forEach(email => {
+        const neueEmail = document.createElement('div');
+        neueEmail.className = 'history-item';
+        neueEmail.textContent = email;
+        containerEmailHistory.appendChild(neueEmail);
+    });
+};
+
+// Eintragen Funktion
+btnEmailEintragen.onclick = () => {
+    const email = inputEmail.value;
+
+    if (email.trim() !== "") {
+        const neueEmail = document.createElement('div');
+        neueEmail.className = 'history-item';
+        neueEmail.textContent = email;
+
+        // dem historycontainer beifügen
+        containerEmailHistory.appendChild(neueEmail);
+
+        // E-Mail im Local Storage speichern
+        saveEmail(email);
+
+        // Input-Feld zurücksetzen
+        inputEmail.value = ""; 
+    } else {
+        alert("Bitte geben Sie eine E-Mail-Adresse ein.");
+    }
+};
+ // CSV Exportfunktion
+ const exportEmailsToCSV = () => {
+            const emailHistory = JSON.parse(localStorage.getItem('emailHistory')) || [];
+            const csvContent = "data:text/csv;charset=utf-8," + emailHistory.join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "email_history.csv");
+            document.body.appendChild(link);
+
+            link.click(); 
+            document.body.removeChild(link);
+        };
+
+        // Excel Exportfunktion
+        const exportEmailsToExcel = () => {
+            const emailHistory = JSON.parse(localStorage.getItem('emailHistory')) || [];
+            const worksheet = XLSX.utils.json_to_sheet(emailHistory.map(email => ({ Email: email })));
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Emails");
+
+            XLSX.writeFile(workbook, "email_history.xlsx");
+        };
+
+        // Buttons zum Exportieren hinzufügen
+        const btnExportEmails = document.createElement('div');
+        btnExportEmails.innerText = "E-Mail-Historie exportieren (CSV)";
+        btnExportEmails.style.cursor = "pointer";
+        btnExportEmails.onclick = exportEmailsToCSV;
+
+        const btnExportEmailsExcel = document.createElement('div');
+        btnExportEmails.className = "btnExportEmails";
+        btnExportEmailsExcel.innerText = "E-Mail-Historie als Excel exportieren";
+        btnExportEmailsExcel.style.cursor = "pointer";
+        btnExportEmailsExcel.onclick = exportEmailsToExcel;
+
+        document.body.appendChild(btnExportEmails);
+        document.body.appendChild(btnExportEmailsExcel);
+
+
+// Lade die E-Mails beim Start der Seite
+window.onload = loadEmails;
+</script>
+
+</body>
+</html>
